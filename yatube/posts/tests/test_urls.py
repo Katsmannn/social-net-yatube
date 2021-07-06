@@ -4,6 +4,8 @@ from django.core.cache import cache
 
 from posts.models import Group, Post
 
+from http import HTTPStatus
+
 User = get_user_model()
 
 
@@ -46,53 +48,48 @@ class PostURLTests(TestCase):
                 response = self.authorized_client.get(adress)
                 self.assertTemplateUsed(response, template)
 
-    def test_home_url_exists_at_desired_location(self):
-        response = self.guest_client.get('/')
-        self.assertEqual(response.status_code, 200)
+    def test_urls_exists_at_desired_location(self):
+        templates_url = [
+            '/',
+            f'/group/{self.group.slug}/',
+            f'/{self.author.username}/',
+            f'/{self.author.username}/{self.post_1.id}/',
+        ]
+        for adress in templates_url:
+            with self.subTest(adress=adress):
+                cache.clear()
+                response = self.guest_client.get(adress)
+                self.assertEqual(response.status_code, HTTPStatus.OK)
 
-    def test_group_url_exists_at_desired_location(self):
-        response = self.guest_client.get(f'/group/{self.group.slug}/')
-        self.assertEqual(response.status_code, 200)
+    def test_newpost_and_postedit_url_redirect_anonymuos(self):
+        templates_url = [
+            '/new/',
+            f'/{self.author.username}/{self.post_1.id}/edit/',
+        ]
+        for adress in templates_url:
+            with self.subTest(adress=adress):
+                response = self.guest_client.get(adress)
+                self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
-    def test_profile_url_exists_at_desired_location(self):
-        response = self.guest_client.get(f'/{self.author.username}/')
-        self.assertEqual(response.status_code, 200)
-
-    def test_post_url_exists_at_desired_location(self):
-        response = self.guest_client.get(
-            f'/{self.author.username}/{self.post_1.id}/'
-        )
-        self.assertEqual(response.status_code, 200)
-
-    def test_newpost_url_redirect_anonymous(self):
-        response = self.guest_client.get('/new/')
-        self.assertEqual(response.status_code, 302)
-
-    def test_postedit_url_redirect_anonymous(self):
-        response = self.guest_client.get(
-            f'/{self.author.username}/{self.post_1.id}/edit/'
-        )
-        self.assertEqual(response.status_code, 302)
-
-    def test_newpost_url_exists_at_desired_location(self):
-        response = self.authorized_client.get('/new/')
-        self.assertEqual(response.status_code, 200)
-
-    def test_postedit_url_exists_at_desired_location(self):
-        response = self.authorized_client.get(
-            f'/{self.author.username}/{self.post_1.id}/edit/'
-        )
-        self.assertEqual(response.status_code, 200)
+    def test_newpost_and_postedit_url_exists_at_desired_location(self):
+        templates_url = [
+            '/new/',
+            f'/{self.author.username}/{self.post_1.id}/edit/',
+        ]
+        for adress in templates_url:
+            with self.subTest(adress=adress):
+                response = self.authorized_client.get(adress)
+                self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_postedit_url_redirect_not_author(self):
         response = self.authorized_client_not_author.get(
             f'/{self.author.username}/{self.post_1.id}/edit/'
         )
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
     def test_page_not_found_status(self):
         response = self.guest_client.get('/wrong_page/')
-        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
 
 
 class CommentURLTests(TestCase):
@@ -113,12 +110,12 @@ class CommentURLTests(TestCase):
 
     def test_add_comment_authorized_user(self):
         response = self.authorized_client_not_author.get(
-            f'/{self.post.author.username}/{self.post.id}/comment'
+            f'/{self.post.author.username}/{self.post.id}/comment/'
         )
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_add_comment_anonymous(self):
         response = self.guest_client.get(
-            f'/{self.post.author.username}/{self.post.id}/comment'
+            f'/{self.post.author.username}/{self.post.id}/comment/'
         )
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)

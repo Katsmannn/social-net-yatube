@@ -73,37 +73,27 @@ class PostPagesTests(TestCase):
                 response = self.authorized_client.get(reverse_name)
                 self.assertTemplateUsed(response, template)
 
-    def test_index_correct_context(self):
-        cache.clear()
-        response = self.authorized_client.get(reverse('index'))
-        post = response.context['page'][0]
-        text = post.text
-        author = post.author
-        pub_date = post.pub_date
-        group = post.group
-        image = post.image
-        self.assertEqual(text, self.post_1.text)
-        self.assertEqual(author.username, self.post_1.author.username)
-        self.assertEqual(pub_date.date(), dt.datetime.now().date())
-        self.assertEqual(group.title, self.post_1.group.title)
-        self.assertEqual(image.name, self.post_1.image.name)
-
-    def test_group_correct_context(self):
-        response = self.authorized_client.get(
-            reverse(
-                'group_detail',
-                kwargs={'slug': self.group.slug}
-            )
-        )
-        post_context = response.context['page'][0]
-        self.assertEqual(response.context['group'].title,
-                         self.post_1.group.title)
-        self.assertEqual(response.context['group'].description,
-                         self.post_1.group.description)
-        self.assertEqual(response.context['group'].slug,
-                         self.post_1.group.slug)
-        self.assertEqual(post_context.image.name, self.post_1.image.name)
-        self.assertIsInstance(post_context, Post)
+    def test_pages_use_correct_context(self):
+        pages_names = [
+            reverse('index'),
+            reverse('profile', args=[self.post_1.author.username]),
+            reverse('group_detail', args=[self.group.slug]),
+        ]
+        for reverse_name in pages_names:
+            with self.subTest(reverse_name=reverse_name):
+                cache.clear()
+                response = self.authorized_client.get(reverse_name)
+                post = response.context['page'][0]
+            text = post.text
+            author = post.author
+            pub_date = post.pub_date
+            group = post.group
+            image = post.image
+            self.assertEqual(text, self.post_1.text)
+            self.assertEqual(author.username, self.post_1.author.username)
+            self.assertEqual(pub_date.date(), dt.datetime.now().date())
+            self.assertEqual(group.title, self.post_1.group.title)
+            self.assertEqual(image.name, self.post_1.image.name)
 
     def test_newpost_correct_context(self):
         response = self.authorized_client.get(reverse('new_post'))
@@ -132,25 +122,6 @@ class PostPagesTests(TestCase):
             with self.subTest(value=value):
                 form_field = response.context['form'].fields[value]
                 self.assertIsInstance(form_field, expected)
-
-    def test_profile_correct_context(self):
-        response = self.authorized_client.get(
-            reverse('profile', args=[self.post_1.author.username])
-        )
-        post = response.context['page'][0]
-        text = post.text
-        author = post.author
-        pub_date = post.pub_date
-        group = post.group
-        image = post.image
-        self.assertEqual(text, self.post_1.text)
-        self.assertEqual(author.username, self.post_1.author.username)
-        self.assertEqual(pub_date.date(), dt.datetime.now().date())
-        self.assertEqual(group.title, self.post_1.group.title)
-        self.assertEqual(response.context['author'].username,
-                         self.post_1.author.username)
-        self.assertEqual(image.name, self.post_1.image.name)
-        self.assertEqual(response.context['count'], 1)
 
     def test_post_correct_context(self):
         response = self.authorized_client.get(
@@ -269,23 +240,30 @@ class FollowTests(TestCase):
             text='Пост для проверки подписок',
             author=cls.following_user,
         )
+        Follow.objects.create(user=cls.following_user,
+                              author=cls.follower_user)
 
     def setUp(self):
         self.follower_client = Client()
         self.follower_client.force_login(self.follower_user)
         self.not_follower_client = Client()
         self.not_follower_client.force_login(self.not_follower_user)
+        self.following_client = Client()
+        self.following_client.force_login(self.following_user)
 
-    def test_follow_and_unfollow(self):
+    def test_follow(self):
         follow_count = Follow.objects.all().count()
         self.follower_client.get(
             reverse('profile_follow', args=[self.following_user.username])
         )
         self.assertEqual(Follow.objects.all().count(), follow_count + 1)
-        self.follower_client.get(
-            reverse('profile_unfollow', args=[self.following_user.username])
+
+    def test_unfollow(self):
+        follow_count = Follow.objects.all().count()
+        self.following_client.get(
+            reverse('profile_unfollow', args=[self.follower_user.username])
         )
-        self.assertEqual(Follow.objects.all().count(), follow_count)
+        self.assertEqual(Follow.objects.all().count(), follow_count - 1)
 
     def test_follow_index(self):
         self.follower_client.get(

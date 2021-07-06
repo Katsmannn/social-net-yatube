@@ -10,7 +10,7 @@ from yatube.settings import PER_PAGE
 
 @cache_page(20)
 def index(request):
-    post_list = Post.objects.all()
+    post_list = Post.objects.select_related('group').all()
     paginator = Paginator(post_list, PER_PAGE)
     page_number = request.GET.get('page')
     page = paginator.get_page(page_number)
@@ -33,13 +33,13 @@ def group_posts(request, slug):
 def profile(request, username):
     user = request.user
     author = get_object_or_404(User, username=username)
-    posts = Post.objects.filter(author=author.id)
+    posts = author.posts.all()
     paginator = Paginator(posts, PER_PAGE)
     page_number = request.GET.get('page')
     page = paginator.get_page(page_number)
     count = paginator.count
     if request.user.is_authenticated:
-        following = Follow.objects.filter(user=user, author=author)
+        following = Follow.objects.filter(user=user, author=author).exists()
     else:
         following = False
     followers = Follow.objects.filter(author=author).count()
@@ -148,16 +148,15 @@ def follow_index(request):
 @login_required
 def profile_follow(request, username):
     user = request.user
-    author = User.objects.get(username=username)
-    follow_count = Follow.objects.filter(user=user, author=author).count()
-    if user != author and follow_count == 0:
-        Follow.objects.create(user=user, author=author)
+    author = get_object_or_404(User, username=username)
+    if user != author:
+        Follow.objects.get_or_create(user=user, author=author)
     return redirect('profile', username)
 
 
 @login_required
 def profile_unfollow(request, username):
     user = request.user
-    author = User.objects.get(username=username)
+    author = get_object_or_404(User, username=username)
     Follow.objects.filter(user=user, author=author).delete()
     return redirect('profile', username)
