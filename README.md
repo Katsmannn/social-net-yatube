@@ -19,4 +19,4 @@ Yatube - Сервис для обмена публикациями. Педост
 http://katsmannn.pythonanywhere.com/
 ```
 
-[https://img.shields.io/github/languages/top/Katsmannn/social-net-yatube]
+https://img.shields.io/github/languages/top/Katsmannn/social-net-yatube
