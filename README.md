@@ -1,3 +1,22 @@
-# hw05_final
+# Yatube
+Сервис - микросоцмальная сеть
 
-[![CI](https://github.com/yandex-praktikum/hw05_final/actions/workflows/python-app.yml/badge.svg?branch=master)](https://github.com/yandex-praktikum/hw05_final/actions/workflows/python-app.yml)
+## Описание
+Yatube - Сервис для обмена публикациями. Педоставляет функционал:  
+- регистрация на сайте
+- авторизация на сайте
+- создание/редактирование/просмотр постов
+- подписка на авторов
+- комментирование постов
+
+## Стек
+- django
+- bootstrap
+
+## Адрес проекта
+Проект доступен по адресу:
+```
+http://katsmannn.pythonanywhere.com/
+```
+
+[https://img.shields.io/github/languages/top/Katsmannn/social-net-yatube]

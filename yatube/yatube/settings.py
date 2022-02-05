@@ -18,6 +18,8 @@ ALLOWED_HOSTS = [
     "127.0.0.1",
     "[::1]",
     "testserver",
+    "www.katsmannn.pythonanywhere.com",
+    "katsmannn.pythonanywhere.com",
 ]
 
 
@@ -61,6 +63,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'django.template.context_processors.year',
             ],
         },
     },
